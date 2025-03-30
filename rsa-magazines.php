@@ -14,9 +14,9 @@ if (!defined('ABSPATH')) {
 // Initialize plugin after WordPress is fully loaded
 function rsa_magazines_init() {
     require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
-    require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-ajax.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-rest.php';
     require_once plugin_dir_path(__FILE__) . 'includes/pdf-viewer-template.php';
+    require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-ajax.php';
 
     // Initialize REST API
     $rsa_magazine_rest = RSA_Magazine_REST::get_instance();
@@ -33,7 +33,7 @@ register_activation_hook(__FILE__, 'rsa_magazines_activate');
 
 // Add this to ensure scripts load in the footer
 function rsa_magazine_viewer_scripts() {
-    if (is_page('magazine-viewer')) {
+    if (is_page() && has_shortcode(get_post()->post_content, 'rsa_magazine_viewer')) {
         wp_enqueue_script('pdf-js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js', array(), '3.4.120', true);
         wp_enqueue_script('three-js', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', array(), 'r128', true);
     }
@@ -45,10 +45,7 @@ function rsa_magazines_activate() {
     $charset_collate = $wpdb->get_charset_collate();
 
     // Create digital magazines table
-    $sql_digital = "DROP TABLE IF EXISTS {$wpdb->prefix}rsa_digital_magazines;";
-    $wpdb->query($sql_digital);
-
-    $sql_digital = "CREATE TABLE {$wpdb->prefix}rsa_digital_magazines (
+    $sql_digital = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}rsa_digital_magazines (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         title varchar(255) NOT NULL,
         description text NOT NULL,
@@ -100,7 +97,7 @@ function rsa_magazines_activate() {
     );
     
     add_option('rsa_magazines_allowed_formats', $default_formats);
-    add_option('rsa_magazines_featured_magazine', ''); // Add this line
+    add_option('rsa_magazines_featured_magazine', ''); 
     add_option('rsa_magazines_login_redirect', wp_login_url()); // Add login redirect option
 
     // Add default templates

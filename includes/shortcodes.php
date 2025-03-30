@@ -65,7 +65,7 @@ function rsa_render_magazine_shortcode($atts) {
     }
 }
 
-// Add this to your existing shortcodes.php file
+// Register the magazine viewer shortcode
 function rsa_magazine_viewer_shortcode($atts) {
     // Call the function from pdf-viewer-template.php
     return rsa_magazine_viewer_shortcode_function();

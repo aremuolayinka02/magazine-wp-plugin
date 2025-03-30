@@ -3,9 +3,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// This file now only contains the function definition
-// The shortcode registration is moved to shortcodes.php
-
 function rsa_magazine_viewer_shortcode_function() {
     // Check if user is logged in
     if (!is_user_logged_in()) {
@@ -98,7 +95,7 @@ function rsa_magazine_viewer_shortcode_function() {
         document.addEventListener('DOMContentLoaded', function() {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-            // Use AJAX to get the PDF URL securely
+            // Use AJAX to get the PDF content securely
             jQuery.ajax({
                 url: '<?php echo admin_url('admin-ajax.php'); ?>',
                 method: 'POST',

@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 class RSA_Magazine_REST {
     private static $instance = null;
     
@@ -14,127 +18,88 @@ class RSA_Magazine_REST {
     }
 
     public function register_routes() {
-        register_rest_route('rsa-magazines/v1', '/magazines/(?P<type>[a-zA-Z0-9-]+)', array(
+        register_rest_route('rsa-magazines/v1', '/shortcode/(?P<name>[a-zA-Z0-9-_]+)', array(
             'methods' => 'GET',
-            'callback' => array($this, 'get_magazines'),
+            'callback' => array($this, 'get_shortcode'),
             'permission_callback' => '__return_true',
-            'args' => array(
-                'type' => array(
-                    'required' => true,
-                    'sanitize_callback' => 'sanitize_text_field'
-                )
-            )
         ));
 
-        register_rest_route('rsa-magazines/v1', '/shortcode/(?P<name>[a-zA-Z0-9-]+)', array(
+        register_rest_route('rsa-magazines/v1', '/magazines/digital', array(
             'methods' => 'GET',
-            'callback' => array($this, 'get_shortcode_data'),
+            'callback' => array($this, 'get_digital_magazines'),
             'permission_callback' => '__return_true',
-            'args' => array(
-                'name' => array(
-                    'required' => true,
-                    'sanitize_callback' => 'sanitize_text_field'
-                )
-            )
         ));
 
-        // Add new route for styles
-        register_rest_route('rsa-magazines/v1', '/styles', array(
+        register_rest_route('rsa-magazines/v1', '/magazines/hardcopy', array(
             'methods' => 'GET',
-            'callback' => array($this, 'get_styles'),
-            'permission_callback' => '__return_true'
+            'callback' => array($this, 'get_hardcopy_magazines'),
+            'permission_callback' => '__return_true',
+        ));
+
+        register_rest_route('rsa-magazines/v1', '/magazines/featured', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_featured_magazine'),
+            'permission_callback' => '__return_true',
         ));
     }
 
-    public function get_magazines($request) {
+    public function get_shortcode($request) {
+        $name = $request->get_param('name');
+        
         global $wpdb;
-        $type = $request->get_param('type');
+        $shortcode = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}rsa_magazine_shortcodes WHERE name = %s",
+            $name
+        ));
         
-        $wpdb->query('SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
-        
-        $magazines = [];
-        
-        switch ($type) {
-            case 'digital':
-            case 'hardcopy':
-                $table = $type === 'digital' ? 'rsa_digital_magazines' : 'rsa_hardcopy_magazines';
-                $magazines = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}{$table} WHERE status = %s ORDER BY created_at DESC",
-                    'active'
-                ));
-                break;
-                
-            case 'featured':
-                $featured_id = get_option('rsa_magazines_featured_magazine');
-                if ($featured_id) {
-                    $magazine = $wpdb->get_row($wpdb->prepare(
-                        "SELECT * FROM {$wpdb->prefix}rsa_digital_magazines WHERE id = %d AND status = %s",
-                        $featured_id,
-                        'active'
-                    ));
-                    if ($magazine) {
-                        $magazines = [$magazine];
-                    }
-                }
-                break;
+        if (!$shortcode) {
+            return new WP_Error('shortcode_not_found', 'Shortcode not found', array('status' => 404));
         }
-
-        return new WP_REST_Response([
-            'magazines' => $magazines,
-            'timestamp' => time()
-        ], 200);
+        
+        // Get viewer page ID from settings
+        $viewer_page_id = get_option('rsa_magazines_viewer_page_id', '');
+        
+        return array(
+            'shortcode' => $shortcode,
+            'viewerPageId' => $viewer_page_id
+        );
     }
 
-    public function get_shortcode_data($request) {
-    global $wpdb;
-    
-    // Force no caching
-    $wpdb->query('SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
-    
-    $name = $request->get_param('name');
-    
-    $shortcode = $wpdb->get_row($wpdb->prepare(
-        "SELECT SQL_NO_CACHE * FROM {$wpdb->prefix}rsa_magazine_shortcodes WHERE name = %s",
-        $name
-    ));
-
-    if (!$shortcode) {
-        return new WP_REST_Response([
-            'error' => 'Shortcode not found: ' . $name
-        ], 404);
-    }
-
-    // Add viewer page ID to the response
-    $viewer_page_id = get_option('rsa_magazines_viewer_page_id', '');
-
-    return new WP_REST_Response([
-        'shortcode' => $shortcode,
-        'viewerPageId' => $viewer_page_id,
-        'timestamp' => time()
-    ], 200);
-}
-
-    public function get_styles() {
-        // Force fresh data from database
+    public function get_digital_magazines() {
         global $wpdb;
-        $wpdb->query("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED");
+        $magazines = $wpdb->get_results(
+            "SELECT * FROM {$wpdb->prefix}rsa_digital_magazines WHERE status = 'active' ORDER BY created_at DESC"
+        );
         
-        $timestamp = get_option('rsa_magazines_settings_timestamp', time(), true);
+        return array('magazines' => $magazines);
+    }
+
+    public function get_hardcopy_magazines() {
+        global $wpdb;
+        $magazines = $wpdb->get_results(
+            "SELECT * FROM {$wpdb->prefix}rsa_hardcopy_magazines WHERE status = 'active' ORDER BY created_at DESC"
+        );
         
-        $response = new WP_REST_Response([
-            'grid_style' => get_option('rsa_magazines_grid_style', '', true),
-            'scroll_style' => get_option('rsa_magazines_scroll_style', '', true),
-            'redirect_url' => get_option('rsa_magazines_redirect_url', '', true),
-            'timestamp' => $timestamp
-        ], 200);
+        return array('magazines' => $magazines);
+    }
+
+    public function get_featured_magazine() {
+        $featured_id = get_option('rsa_magazines_featured_magazine');
         
-        // Add cache control headers
-        $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->header('Pragma', 'no-cache');
-        $response->header('Expires', '0');
+        if (!$featured_id) {
+            return array('magazines' => array());
+        }
         
-        return $response;
+        global $wpdb;
+        $magazine = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}rsa_digital_magazines WHERE id = %d AND status = 'active'",
+            $featured_id
+        ));
+        
+        if (!$magazine) {
+            return array('magazines' => array());
+        }
+        
+        return array('magazines' => array($magazine));
     }
 }

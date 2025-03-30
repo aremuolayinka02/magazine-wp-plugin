@@ -4,8 +4,6 @@
     var data = $container.data();
     var timestamp = new Date().getTime();
 
-    console.log("Initializing magazine container:", data);
-
     $.ajax({
       url: data.restUrl + "shortcode/" + data.shortcode + "?_=" + timestamp,
       method: "GET",
@@ -17,9 +15,6 @@
       },
     })
       .then(function (response) {
-        console.log("Shortcode response:", response);
-        console.log("Viewer Page ID from response:", response.viewerPageId);
-
         if (!response || !response.shortcode) {
           throw new Error("Invalid shortcode response");
         }
@@ -39,7 +34,6 @@
             Pragma: "no-cache",
           },
         }).then(function (magazineResponse) {
-          console.log("Magazine response:", magazineResponse);
           return {
             shortcode: response.shortcode,
             magazines: magazineResponse.magazines || [],
@@ -48,9 +42,6 @@
         });
       })
       .then(function (data) {
-        console.log("Final data for rendering:", data);
-        console.log("Viewer Page ID for URL:", data.viewerPageId);
-
         if (!data.magazines || !data.magazines.length) {
           $container.html("<p>No magazines found</p>");
           return;
@@ -126,31 +117,18 @@
             if (!magazine.pdf_file) {
               template = '<div class="magazine-error">PDF file missing</div>';
             } else {
-              // Get the viewer page ID from the response
-              var viewerPageId = data.viewerPageId || "";
-              console.log(
-                "Using viewer page ID for magazine " + magazine.id + ":",
-                viewerPageId
-              );
-
               var magazineUrl = "";
               if ($container.data("loggedIn")) {
-                if (viewerPageId) {
-                  // Now we only pass the magazine ID, not the PDF URL
+                if (data.viewerPageId) {
+                  // Only pass the magazine ID, not the PDF URL
                   magazineUrl =
-                    "?page_id=" + viewerPageId + "&id=" + magazine.id;
+                    "?page_id=" + data.viewerPageId + "&id=" + magazine.id;
                 } else {
-                  console.warn("No viewer page ID found! Check your settings.");
                   magazineUrl = "#";
                 }
               } else {
                 magazineUrl = $container.data("redirect");
               }
-
-              console.log(
-                "Generated URL for magazine " + magazine.id + ":",
-                magazineUrl
-              );
 
               template = template.replace(
                 /href="{pdf_file}"/g,
@@ -183,23 +161,15 @@
       })
       .fail(function (error) {
         console.error("Loading error:", error);
-        console.log("Request details:", {
-          shortcode: data.shortcode,
-          restUrl: data.restUrl,
-          nonce: data.nonce,
-        });
         $container.html(
-          "<p>Error loading content. Please check browser console for details.</p>"
+          "<p>Error loading content. Please try again later.</p>"
         );
       });
   };
 
   // Initialize immediately when document is ready
   $(document).ready(function () {
-    console.log("Looking for magazine containers...");
     var containers = $(".rsa-magazines-container");
-    console.log("Found containers:", containers.length);
-
     containers.each(function () {
       initMagazineContainer(this);
     });
