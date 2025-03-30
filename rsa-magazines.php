@@ -16,6 +16,8 @@ function rsa_magazines_init() {
     require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-ajax.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-rest.php';
+    // Add this to your existing plugin file
+    require_once plugin_dir_path(__FILE__) . 'includes/pdf-viewer-template.php';
 
     // Initialize REST API
     $rsa_magazine_rest = RSA_Magazine_REST::get_instance();
@@ -25,6 +27,15 @@ add_action('plugins_loaded', 'rsa_magazines_init');
 
 // Place activation hook and related functions at top level
 register_activation_hook(__FILE__, 'rsa_magazines_activate');
+
+// Add this to ensure scripts load in the footer
+function rsa_magazine_viewer_scripts() {
+    if (is_page('magazine-viewer')) {
+        wp_enqueue_script('pdf-js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js', array(), '3.4.120', true);
+        wp_enqueue_script('three-js', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', array(), 'r128', true);
+    }
+}
+add_action('wp_enqueue_scripts', 'rsa_magazine_viewer_scripts');
 
 function rsa_magazines_activate() {
     global $wpdb;

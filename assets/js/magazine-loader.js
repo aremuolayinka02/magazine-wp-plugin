@@ -95,15 +95,34 @@
             data.magazines.forEach(function(magazine) {
                 var template = data.shortcode.template;
                 
-                if (data.shortcode.list_type === "digital" || data.shortcode.list_type === "featured") {
-                    if (!magazine.pdf_file) {
-                        template = '<div class="magazine-error">PDF file missing</div>';
-                    } else {
-                        template = template.replace(/href="{pdf_file}"/g, 
-                            'href="' + ($container.data('loggedIn') ? magazine.pdf_file : $container.data('redirect')) + '"');
-                    }
-                } else if (data.shortcode.list_type === "hardcopy" && magazine.payment_page_id) {
-                    template = template.replace(/{payment_page}/g, '?page_id=' + magazine.payment_page_id);
+                if (
+                  data.shortcode.list_type === "digital" ||
+                  data.shortcode.list_type === "featured"
+                ) {
+                  if (!magazine.pdf_file) {
+                    template =
+                      '<div class="magazine-error">PDF file missing</div>';
+                  } else {
+                    template = template.replace(
+                      /href="{pdf_file}"/g,
+                      'href="' +
+                        ($container.data("loggedIn")
+                          ? "/magazine-viewer/?pdf=" +
+                            encodeURIComponent(magazine.pdf_file) +
+                            "&id=" +
+                            magazine.id
+                          : $container.data("redirect")) +
+                        '"'
+                    );
+                  }
+                } else if (
+                  data.shortcode.list_type === "hardcopy" &&
+                  magazine.payment_page_id
+                ) {
+                  template = template.replace(
+                    /{payment_page}/g,
+                    "?page_id=" + magazine.payment_page_id
+                  );
                 }
                 
                 html += template
