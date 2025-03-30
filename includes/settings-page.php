@@ -3,6 +3,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Get saved values
+$allowed_formats = get_option('rsa_magazines_allowed_formats');
+$featured_magazine = get_option('rsa_magazines_featured_magazine');
+$redirect_url = get_option('rsa_magazines_redirect_url', '');
+$viewer_page_id = get_option('rsa_magazines_viewer_page_id', '');
+
 // Add repair tables handler
 if (isset($_POST['repair_tables']) && check_admin_referer('repair_tables', 'repair_nonce')) {
     global $wpdb;
@@ -71,6 +77,10 @@ if (isset($_POST['save_settings'])) {
     // Save redirect URL with no cache and force DB update
     update_option('rsa_magazines_redirect_url', esc_url_raw($_POST['redirect_url']), false);
     
+    // Save viewer page ID
+    $viewer_page_id = isset($_POST['viewer_page_id']) ? intval($_POST['viewer_page_id']) : '';
+    update_option('rsa_magazines_viewer_page_id', $viewer_page_id);
+    
     // Clear all caches
     wp_cache_delete('rsa_magazines_redirect_url', 'options');
     wp_cache_delete('rsa_magazines_settings', 'options');
@@ -84,11 +94,6 @@ if (isset($_POST['save_settings'])) {
     
     echo '<div class="notice notice-success is-dismissible"><p>Settings saved successfully!</p></div>';
 }
-
-// Get saved values
-$allowed_formats = get_option('rsa_magazines_allowed_formats');
-$featured_magazine = get_option('rsa_magazines_featured_magazine');
-$redirect_url = get_option('rsa_magazines_redirect_url', '');
 
 global $wpdb;
 $magazines = $wpdb->get_results("SELECT id, title FROM {$wpdb->prefix}rsa_digital_magazines WHERE status = 'active' ORDER BY created_at DESC");
@@ -113,6 +118,22 @@ $magazines = $wpdb->get_results("SELECT id, title FROM {$wpdb->prefix}rsa_digita
                         <?php endforeach; ?>
                     </select>
                     <p class="description">Select one digital magazine to feature.</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row"><label for="viewer_page_id">Magazine Viewer Page</label></th>
+                <td>
+                    <select name="viewer_page_id" id="viewer_page_id">
+                        <option value="">Select a page</option>
+                        <?php
+                        $pages = get_pages();
+                        foreach ($pages as $page) {
+                            echo '<option value="' . $page->ID . '" ' . selected($viewer_page_id, $page->ID, false) . '>' . $page->post_title . '</option>';
+                        }
+                        ?>
+                    </select>
+                    <p class="description">Select the page where you've added the [rsa_magazine_viewer] shortcode.</p>
                 </td>
             </tr>
         </table>

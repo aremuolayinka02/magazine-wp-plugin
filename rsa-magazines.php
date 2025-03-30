@@ -16,6 +16,7 @@ function rsa_magazines_init() {
     require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-ajax.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-rest.php';
+    require_once plugin_dir_path(__FILE__) . 'includes/pdf-viewer-template.php';
 
     // Initialize REST API
     $rsa_magazine_rest = RSA_Magazine_REST::get_instance();
@@ -25,6 +26,7 @@ add_action('plugins_loaded', 'rsa_magazines_init');
 
 // Place activation hook and related functions at top level
 register_activation_hook(__FILE__, 'rsa_magazines_activate');
+
 
 // Add this to ensure scripts load in the footer
 function rsa_magazine_viewer_scripts() {

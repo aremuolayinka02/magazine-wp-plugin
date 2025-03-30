@@ -3,18 +3,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-function rsa_magazine_pdf_viewer_page() {
+// Add shortcode for the PDF viewer
+function rsa_magazine_viewer_shortcode() {
     if (!is_user_logged_in()) {
-        wp_redirect(wp_login_url());
-        exit;
+        return '<div class="magazine-login-required">Please log in to view this magazine.</div>';
     }
 
     $pdf_url = isset($_GET['pdf']) ? esc_url_raw($_GET['pdf']) : '';
     $magazine_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
     if (empty($pdf_url) || empty($magazine_id)) {
-        wp_redirect(home_url());
-        exit;
+        return '<div class="magazine-error">Invalid magazine parameters.</div>';
     }
 
     // Get magazine details
@@ -23,15 +22,14 @@ function rsa_magazine_pdf_viewer_page() {
     $magazine = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $magazine_id));
 
     if (!$magazine) {
-        wp_redirect(home_url());
-        exit;
+        return '<div class="magazine-error">Magazine not found.</div>';
     }
 
     // Enqueue necessary scripts
     wp_enqueue_script('pdf-js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js', array(), '3.4.120');
     wp_enqueue_script('three-js', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', array(), 'r128');
-    
-    get_header();
+
+    ob_start();
     ?>
     <div class="rsa-pdf-viewer-container">
         <div class="pdf-viewer-header">
@@ -89,133 +87,110 @@ function rsa_magazine_pdf_viewer_page() {
     </style>
 
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        document.addEventListener('DOMContentLoaded', function() {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-        const pdfUrl = '<?php echo esc_js($pdf_url); ?>';
-        let pdfDoc = null;
-        let pageNum = 1;
-        let pageRendering = false;
-        let pageNumPending = null;
-        const canvas = document.getElementById('pdf-viewer-canvas');
-        const ctx = canvas.getContext('2d');
+            const pdfUrl = '<?php echo esc_js($pdf_url); ?>';
+            let pdfDoc = null;
+            let pageNum = 1;
+            let pageRendering = false;
+            let pageNumPending = null;
+            const canvas = document.getElementById('pdf-viewer-canvas');
+            const ctx = canvas.getContext('2d');
 
-        // Load the PDF
-        pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
-            pdfDoc = pdfDoc_;
-            document.getElementById('page-count').textContent = pdfDoc.numPages;
-            renderPage(pageNum);
-        });
+            // Load the PDF
+            pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
+                pdfDoc = pdfDoc_;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            });
 
-        function renderPage(num) {
-            pageRendering = true;
-            pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({scale: 1.5});
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+            function renderPage(num) {
+                pageRendering = true;
+                pdfDoc.getPage(num).then(function(page) {
+                    const viewport = page.getViewport({scale: 1.5});
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
 
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
-                const renderTask = page.render(renderContext);
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport
+                    };
+                    const renderTask = page.render(renderContext);
 
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
+                    renderTask.promise.then(function() {
+                        pageRendering = false;
+                        if (pageNumPending !== null) {
+                            renderPage(pageNumPending);
+                            pageNumPending = null;
+                        }
+                    });
                 });
+
+                document.getElementById('page-num').textContent = num;
+            }
+
+            document.getElementById('prev-page').addEventListener('click', function() {
+                if (pageNum <= 1) return;
+                pageNum--;
+                renderPage(pageNum);
             });
 
-            document.getElementById('page-num').textContent = num;
-        }
-
-        document.getElementById('prev-page').addEventListener('click', function() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            renderPage(pageNum);
-        });
-
-        document.getElementById('next-page').addEventListener('click', function() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            renderPage(pageNum);
-        });
-
-        // 3D viewer setup
-        let scene, camera, renderer;
-        const init3DViewer = () => {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({
-                canvas: document.getElementById('3d-viewer-canvas')
+            document.getElementById('next-page').addEventListener('click', function() {
+                if (pageNum >= pdfDoc.numPages) return;
+                pageNum++;
+                renderPage(pageNum);
             });
-            
-            renderer.setSize(window.innerWidth, 600);
-            camera.position.z = 5;
 
-            // Add some 3D elements to represent pages
-            const geometry = new THREE.BoxGeometry(1, 1.4, 0.1);
-            const material = new THREE.MeshBasicMaterial({color: 0xffffff});
-            const pages = new THREE.Group();
+            // 3D viewer setup
+            let scene, camera, renderer;
+            const init3DViewer = () => {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({
+                    canvas: document.getElementById('3d-viewer-canvas')
+                });
+                
+                renderer.setSize(window.innerWidth, 600);
+                camera.position.z = 5;
 
-            for(let i = 0; i < 5; i++) {
-                const page = new THREE.Mesh(geometry, material);
-                page.position.z = i * 0.1;
-                pages.add(page);
-            }
+                // Add some 3D elements to represent pages
+                const geometry = new THREE.BoxGeometry(1, 1.4, 0.1);
+                const material = new THREE.MeshBasicMaterial({color: 0xffffff});
+                const pages = new THREE.Group();
 
-            scene.add(pages);
+                for(let i = 0; i < 5; i++) {
+                    const page = new THREE.Mesh(geometry, material);
+                    page.position.z = i * 0.1;
+                    pages.add(page);
+                }
 
-            function animate() {
-                requestAnimationFrame(animate);
-                pages.rotation.y += 0.01;
-                renderer.render(scene, camera);
-            }
-            animate();
-        };
+                scene.add(pages);
 
-        document.getElementById('toggle-3d').addEventListener('click', function() {
-            const pdfContainer = document.getElementById('pdf-viewer-canvas-container');
-            const viewer3D = document.getElementById('3d-viewer-container');
-            
-            if(viewer3D.style.display === 'none') {
-                pdfContainer.style.display = 'none';
-                viewer3D.style.display = 'block';
-                if(!scene) init3DViewer();
-            } else {
-                pdfContainer.style.display = 'block';
-                viewer3D.style.display = 'none';
-            }
+                function animate() {
+                    requestAnimationFrame(animate);
+                    pages.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                }
+                animate();
+            };
+
+            document.getElementById('toggle-3d').addEventListener('click', function() {
+                const pdfContainer = document.getElementById('pdf-viewer-canvas-container');
+                const viewer3D = document.getElementById('3d-viewer-container');
+                
+                if(viewer3D.style.display === 'none') {
+                    pdfContainer.style.display = 'none';
+                    viewer3D.style.display = 'block';
+                    if(!scene) init3DViewer();
+                } else {
+                    pdfContainer.style.display = 'block';
+                    viewer3D.style.display = 'none';
+                }
+            });
         });
     </script>
     <?php
-    get_footer();
+    return ob_get_clean();
 }
-
-// Add rewrite rule for the viewer page
-function rsa_magazine_add_rewrite_rules() {
-    add_rewrite_rule(
-        'magazine-viewer/?$',
-        'index.php?magazine_viewer=1',
-        'top'
-    );
-}
-add_action('init', 'rsa_magazine_add_rewrite_rules');
-
-// Add query var
-function rsa_magazine_add_query_vars($vars) {
-    $vars[] = 'magazine_viewer';
-    return $vars;
-}
-add_filter('query_vars', 'rsa_magazine_add_query_vars');
-
-// Template redirect
-function rsa_magazine_template_redirect() {
-    if (get_query_var('magazine_viewer')) {
-        rsa_magazine_pdf_viewer_page();
-        exit;
-    }
-}
-add_action('template_redirect', 'rsa_magazine_template_redirect');
+add_shortcode('rsa_magazine_viewer', 'rsa_magazine_viewer_shortcode');

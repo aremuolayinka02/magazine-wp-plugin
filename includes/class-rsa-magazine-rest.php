@@ -86,31 +86,35 @@ class RSA_Magazine_REST {
     }
 
     public function get_shortcode_data($request) {
-        global $wpdb;
-        
-        // Force no caching
-        $wpdb->query('SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
-        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-        header('Pragma: no-cache');
-        
-        $name = $request->get_param('name');
-        
-        $shortcode = $wpdb->get_row($wpdb->prepare(
-            "SELECT SQL_NO_CACHE * FROM {$wpdb->prefix}rsa_magazine_shortcodes WHERE name = %s",
-            $name
-        ));
+    global $wpdb;
+    
+    // Force no caching
+    $wpdb->query('SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    
+    $name = $request->get_param('name');
+    
+    $shortcode = $wpdb->get_row($wpdb->prepare(
+        "SELECT SQL_NO_CACHE * FROM {$wpdb->prefix}rsa_magazine_shortcodes WHERE name = %s",
+        $name
+    ));
 
-        if (!$shortcode) {
-            return new WP_REST_Response([
-                'error' => 'Shortcode not found: ' . $name
-            ], 404);
-        }
-
+    if (!$shortcode) {
         return new WP_REST_Response([
-            'shortcode' => $shortcode,
-            'timestamp' => time()
-        ], 200);
+            'error' => 'Shortcode not found: ' . $name
+        ], 404);
     }
+
+    // Add viewer page ID to the response
+    $viewer_page_id = get_option('rsa_magazines_viewer_page_id', '');
+
+    return new WP_REST_Response([
+        'shortcode' => $shortcode,
+        'viewerPageId' => $viewer_page_id,
+        'timestamp' => time()
+    ], 200);
+}
 
     public function get_styles() {
         // Force fresh data from database
