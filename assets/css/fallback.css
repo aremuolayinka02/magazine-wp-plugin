@@ -1,0 +1,57 @@
+/* Basic fallback styles if JavaScript fails */
+.rsa-magazines-container {
+    margin: 20px 0;
+}
+
+.magazine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.magazine-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding: 20px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.magazine-item {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.magazine-item img {
+    max-width: 100%;
+    height: auto;
+}
+
+.rsa-magazines-error {
+    padding: 15px;
+    margin: 10px 0;
+    background: #fff1f1;
+    border: 1px solid #dc3232;
+    border-radius: 4px;
+    color: #dc3232;
+}
+
+.rsa-magazines-loading {
+    padding: 20px;
+    text-align: center;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Ensure container styles take precedence */
+[class*="magazine-container"] {
+    --magazine-z-index: 1;
+}
+
+[class*="magazine-container"] > * {
+    --magazine-z-index: 2;
+}
