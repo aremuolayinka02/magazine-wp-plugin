@@ -17,6 +17,7 @@ function rsa_magazines_init() {
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-rest.php';
     require_once plugin_dir_path(__FILE__) . 'includes/pdf-viewer-template.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-ajax.php';
+    require_once plugin_dir_path(__FILE__) . 'includes/settings-page.php';
 
     // Initialize REST API
     $rsa_magazine_rest = RSA_Magazine_REST::get_instance();
@@ -149,15 +150,23 @@ add_action('plugins_loaded', 'rsa_magazines_upgrade_check');
 
 // Add admin menu
 function rsa_magazines_admin_menu() {
-    // Change from manage_options to edit_posts capability
     add_menu_page(
         'RSA Magazines',
         'RSA Magazines',
-        'edit_posts', // This capability is available to all roles except subscriber
+        'edit_posts',
         'rsa-magazines',
         'rsa_magazines_main_page',
         'dashicons-book-alt',
         30
+    );
+    
+    add_submenu_page(
+        'rsa-magazines',
+        'Settings',
+        'Settings',
+        'manage_options', // Change capability for settings
+        'rsa-magazines-settings',
+        'rsa_magazines_settings_page'
     );
 }
 add_action('admin_menu', 'rsa_magazines_admin_menu');
@@ -170,7 +179,6 @@ function rsa_magazines_main_page() {
 
     $current_tab = isset($_GET['tab']) ? $_GET['tab'] : 'digital';
     $action = isset($_GET['action']) ? $_GET['action'] : 'list';
-    
     ?>
     <div class="wrap">
         <h1>RSA Magazines</h1>
@@ -181,7 +189,6 @@ function rsa_magazines_main_page() {
                 $tabs = array(
                     'digital' => 'Digital Magazine',
                     'hardcopy' => 'Hard Copy Magazine',
-                    'settings' => 'Settings',
                     'shortcodes' => 'Shortcode Builder',
                     'styling' => 'Advanced Styling'
                 );
@@ -196,9 +203,9 @@ function rsa_magazines_main_page() {
                     </a>
                 <?php endforeach; ?>
             </nav>
-
+            
             <div class="tabbed-content">
-                <?php if ($current_tab !== 'settings' && $current_tab !== 'shortcodes' && $current_tab !== 'styling'): ?>
+                <?php if ($current_tab !== 'shortcodes' && $current_tab !== 'styling'): ?>
                     <div class="add-new-wrapper" style="margin: 20px 0;">
                         <a href="?page=rsa-magazines&tab=<?php echo $current_tab; ?>&action=add" class="page-title-action">Add New</a>
                     </div>
@@ -211,9 +218,6 @@ function rsa_magazines_main_page() {
                         break;
                     case 'hardcopy':
                         include_once plugin_dir_path(__FILE__) . 'includes/hardcopy-magazine-list.php';
-                        break;
-                    case 'settings':
-                        include_once plugin_dir_path(__FILE__) . 'includes/settings-page.php';
                         break;
                     case 'shortcodes':
                         include_once plugin_dir_path(__FILE__) . 'includes/shortcode-builder.php';
