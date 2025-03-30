@@ -67,6 +67,16 @@ if (isset($_GET['message'])) {
         echo '<div class="notice notice-success"><p>Magazine featured successfully!</p></div>';
     }
 }
+
+// Add this to your digital-magazine-list.php file or wherever the magazine links are generated
+function rsa_get_magazine_viewer_url($magazine_id) {
+    $viewer_page_id = get_option('rsa_magazines_viewer_page_id', '');
+    if (!$viewer_page_id) {
+        return '#';
+    }
+    
+    return add_query_arg('id', $magazine_id, get_permalink($viewer_page_id));
+}
 ?>
 
 <table class="wp-list-table widefat fixed striped">

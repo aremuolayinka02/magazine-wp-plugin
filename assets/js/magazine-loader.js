@@ -119,6 +119,7 @@
             } else {
               var magazineUrl = "";
               if ($container.data("loggedIn")) {
+                // In the magazine-loader.js file, modify the part where it creates the URL:
                 if (data.viewerPageId) {
                   // Only pass the magazine ID, not the PDF URL
                   magazineUrl =

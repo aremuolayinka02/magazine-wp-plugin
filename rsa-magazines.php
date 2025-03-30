@@ -237,6 +237,19 @@ function rsa_magazines_main_page() {
     <?php
 }
 
+// Add this to your main plugin file
+function rsa_clean_magazine_url() {
+    if (isset($_GET['page_id']) && isset($_GET['pdf'])) {
+        // If we have both page_id and pdf parameters, remove the pdf parameter
+        $clean_url = remove_query_arg('pdf');
+        if ($clean_url !== $_SERVER['REQUEST_URI']) {
+            wp_redirect($clean_url);
+            exit;
+        }
+    }
+}
+add_action('template_redirect', 'rsa_clean_magazine_url');
+
 // Register shortcodes and enqueue styles
 function rsa_magazines_register_shortcodes() {   
     // Register single shortcode handler for all magazine displays

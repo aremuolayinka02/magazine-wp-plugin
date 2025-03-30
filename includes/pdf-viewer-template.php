@@ -223,3 +223,10 @@ function rsa_magazine_viewer_shortcode_function() {
     <?php
     return ob_get_clean();
 }
+
+// In shortcodes.php, make sure the shortcode is registered correctly
+function rsa_magazine_viewer_shortcode($atts) {
+    // Call the function from pdf-viewer-template.php
+    return rsa_magazine_viewer_shortcode_function();
+}
+add_shortcode('rsa_magazine_viewer', 'rsa_magazine_viewer_shortcode');
