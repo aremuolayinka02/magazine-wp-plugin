@@ -18,6 +18,8 @@
     })
       .then(function (response) {
         console.log("Shortcode response:", response);
+        console.log("Viewer Page ID from response:", response.viewerPageId);
+
         if (!response || !response.shortcode) {
           throw new Error("Invalid shortcode response");
         }
@@ -46,6 +48,9 @@
         });
       })
       .then(function (data) {
+        console.log("Final data for rendering:", data);
+        console.log("Viewer Page ID for URL:", data.viewerPageId);
+
         if (!data.magazines || !data.magazines.length) {
           $container.html("<p>No magazines found</p>");
           return;
@@ -123,19 +128,36 @@
             } else {
               // Get the viewer page ID from the response
               var viewerPageId = data.viewerPageId || "";
+              console.log(
+                "Using viewer page ID for magazine " + magazine.id + ":",
+                viewerPageId
+              );
+
+              var magazineUrl = "";
+              if ($container.data("loggedIn")) {
+                if (viewerPageId) {
+                  magazineUrl = "?page_id=" + viewerPageId;
+                } else {
+                  console.warn("No viewer page ID found! Check your settings.");
+                  magazineUrl = "?";
+                }
+                magazineUrl +=
+                  "&pdf=" +
+                  encodeURIComponent(magazine.pdf_file) +
+                  "&id=" +
+                  magazine.id;
+              } else {
+                magazineUrl = $container.data("redirect");
+              }
+
+              console.log(
+                "Generated URL for magazine " + magazine.id + ":",
+                magazineUrl
+              );
 
               template = template.replace(
                 /href="{pdf_file}"/g,
-                'href="' +
-                  ($container.data("loggedIn")
-                    ? "?page_id=" +
-                      viewerPageId +
-                      "&pdf=" +
-                      encodeURIComponent(magazine.pdf_file) +
-                      "&id=" +
-                      magazine.id
-                    : $container.data("redirect")) +
-                  '"'
+                'href="' + magazineUrl + '"'
               );
             }
           } else if (
