@@ -1,0 +1,1 @@
+# magazine-wp-plugin
