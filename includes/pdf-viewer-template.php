@@ -3,8 +3,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Add shortcode for the PDF viewer
-function rsa_magazine_viewer_shortcode() {
+// This file now only contains the function definition
+// The shortcode registration is moved to shortcodes.php
+
+function rsa_magazine_viewer_shortcode_function() {
     if (!is_user_logged_in()) {
         return '<div class="magazine-login-required">Please log in to view this magazine.</div>';
     }
@@ -193,4 +195,3 @@ function rsa_magazine_viewer_shortcode() {
     <?php
     return ob_get_clean();
 }
-add_shortcode('rsa_magazine_viewer', 'rsa_magazine_viewer_shortcode');
