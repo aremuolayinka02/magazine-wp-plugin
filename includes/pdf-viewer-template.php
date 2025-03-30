@@ -107,8 +107,16 @@ function rsa_magazine_viewer_shortcode_function() {
                 success: function(response) {
                     if (response.success && response.data.pdf_url) {
                         initPdfViewer(response.data.pdf_url);
+                        
+                        // Clean URL if PDF parameter was passed
+                        if (window.location.href.indexOf('pdf=') > -1) {
+                            history.replaceState({}, document.title, window.location.pathname + '?id=<?php echo $magazine_id; ?>');
+                        }
                     } else {
                         alert('Error loading PDF: ' + (response.data.message || 'Unknown error'));
+                        if (response.data.redirect) {
+                            window.location.href = response.data.redirect;
+                        }
                     }
                 },
                 error: function() {
@@ -125,7 +133,10 @@ function rsa_magazine_viewer_shortcode_function() {
                 const ctx = canvas.getContext('2d');
 
                 // Load the PDF
-                pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
+                pdfjsLib.getDocument({
+                    url: pdfUrl,
+                    withCredentials: true // For secure PDFs
+                }).promise.then(function(pdfDoc_) {
                     pdfDoc = pdfDoc_;
                     document.getElementById('page-count').textContent = pdfDoc.numPages;
                     renderPage(pageNum);
@@ -177,7 +188,8 @@ function rsa_magazine_viewer_shortcode_function() {
                     scene = new THREE.Scene();
                     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                     renderer = new THREE.WebGLRenderer({
-                        canvas: document.getElementById('3d-viewer-canvas')
+                        canvas: document.getElementById('3d-viewer-canvas'),
+                        antialias: true
                     });
                     
                     renderer.setSize(window.innerWidth, 600);
@@ -223,10 +235,3 @@ function rsa_magazine_viewer_shortcode_function() {
     <?php
     return ob_get_clean();
 }
-
-// In shortcodes.php, make sure the shortcode is registered correctly
-function rsa_magazine_viewer_shortcode($atts) {
-    // Call the function from pdf-viewer-template.php
-    return rsa_magazine_viewer_shortcode_function();
-}
-add_shortcode('rsa_magazine_viewer', 'rsa_magazine_viewer_shortcode');

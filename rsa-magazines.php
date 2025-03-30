@@ -237,10 +237,10 @@ function rsa_magazines_main_page() {
     <?php
 }
 
-// Add this to your main plugin file
+// Add this to rsa-magazines.php
 function rsa_clean_magazine_url() {
-    if (isset($_GET['page_id']) && isset($_GET['pdf'])) {
-        // If we have both page_id and pdf parameters, remove the pdf parameter
+    if (isset($_GET['pdf'])) {
+        // Remove the pdf parameter if it exists
         $clean_url = remove_query_arg('pdf');
         if ($clean_url !== $_SERVER['REQUEST_URI']) {
             wp_redirect($clean_url);

@@ -37,7 +37,6 @@ function rsa_magazines_settings_page() {
     // Get all digital magazines for featured dropdown
     global $wpdb;
     $digital_magazines = $wpdb->get_results("SELECT id, title FROM {$wpdb->prefix}rsa_digital_magazines ORDER BY title ASC");
-    
     ?>
     <div class="wrap">
         <h2>Magazine Settings</h2>
