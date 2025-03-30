@@ -66,6 +66,7 @@ function rsa_render_magazine_shortcode($atts) {
 }
 
 // Add this to your shortcodes.php
+// Add this to your existing shortcodes.php file
 function rsa_magazine_viewer_shortcode($atts) {
     if (!is_user_logged_in()) {
         return '<div class="magazine-login-required">Please log in to view this magazine.</div>';
@@ -78,6 +79,15 @@ function rsa_magazine_viewer_shortcode($atts) {
         return '<div class="magazine-error">Invalid magazine parameters.</div>';
     }
 
+    // Get magazine details
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'rsa_digital_magazines';
+    $magazine = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $magazine_id));
+
+    if (!$magazine) {
+        return '<div class="magazine-error">Magazine not found.</div>';
+    }
+
     // Enqueue necessary scripts
     wp_enqueue_script('pdf-js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js', array(), '3.4.120');
     wp_enqueue_script('three-js', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', array(), 'r128');
@@ -86,6 +96,7 @@ function rsa_magazine_viewer_shortcode($atts) {
     ?>
     <div class="rsa-pdf-viewer-container">
         <div class="pdf-viewer-header">
+            <h1><?php echo esc_html($magazine->title); ?></h1>
             <div class="pdf-controls">
                 <button id="prev-page">Previous</button>
                 <span>Page: <span id="page-num"></span> / <span id="page-count"></span></span>
@@ -135,17 +146,6 @@ function rsa_magazine_viewer_shortcode($atts) {
             width: 100%;
             height: 600px;
             background: #000;
-        }
-        .pdf-controls button {
-            padding: 8px 16px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .pdf-controls button:hover {
-            background: #0056b3;
         }
     </style>
 

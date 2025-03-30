@@ -16,8 +16,6 @@ function rsa_magazines_init() {
     require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-ajax.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-rsa-magazine-rest.php';
-    // Add this to your existing plugin file
-    require_once plugin_dir_path(__FILE__) . 'includes/pdf-viewer-template.php';
 
     // Initialize REST API
     $rsa_magazine_rest = RSA_Magazine_REST::get_instance();

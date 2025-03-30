@@ -93,44 +93,50 @@
 
             // Add magazine items
             data.magazines.forEach(function(magazine) {
-                var template = data.shortcode.template;
-                
-                if (
-                  data.shortcode.list_type === "digital" ||
-                  data.shortcode.list_type === "featured"
-                ) {
-                  if (!magazine.pdf_file) {
-                    template =
-                      '<div class="magazine-error">PDF file missing</div>';
-                  } else {
-                    template = template.replace(
-                      /href="{pdf_file}"/g,
-                      'href="' +
-                        ($container.data("loggedIn")
-                          ? "/magazine-viewer/?pdf=" +
-                            encodeURIComponent(magazine.pdf_file) +
-                            "&id=" +
-                            magazine.id
-                          : $container.data("redirect")) +
-                        '"'
-                    );
-                  }
-                } else if (
-                  data.shortcode.list_type === "hardcopy" &&
-                  magazine.payment_page_id
-                ) {
+              var template = data.shortcode.template;
+
+              // In magazine-loader.js, modify the PDF file handling section:
+              // In magazine-loader.js, modify the PDF file handling section:
+              if (
+                data.shortcode.list_type === "digital" ||
+                data.shortcode.list_type === "featured"
+              ) {
+                if (!magazine.pdf_file) {
+                  template =
+                    '<div class="magazine-error">PDF file missing</div>';
+                } else {
+                  // Use window.location.origin to get the full site URL
+                  var siteUrl = window.location.origin;
+
                   template = template.replace(
-                    /{payment_page}/g,
-                    "?page_id=" + magazine.payment_page_id
+                    /href="{pdf_file}"/g,
+                    'href="' +
+                      ($container.data("loggedIn")
+                        ? siteUrl +
+                          "/magazine-viewer/?pdf=" +
+                          encodeURIComponent(magazine.pdf_file) +
+                          "&id=" +
+                          magazine.id
+                        : $container.data("redirect")) +
+                      '"'
                   );
                 }
-                
-                html += template
-                    .replace(/{title}/g, magazine.title || '')
-                    .replace(/{featured_image}/g, magazine.featured_image || '')
-                    .replace(/{description}/g, magazine.description || '')
-                    .replace(/{issue_number}/g, magazine.issue_number || '')
-                    .replace(/{price}/g, magazine.price || '');
+              } else if (
+                data.shortcode.list_type === "hardcopy" &&
+                magazine.payment_page_id
+              ) {
+                template = template.replace(
+                  /{payment_page}/g,
+                  "?page_id=" + magazine.payment_page_id
+                );
+              }
+
+              html += template
+                .replace(/{title}/g, magazine.title || "")
+                .replace(/{featured_image}/g, magazine.featured_image || "")
+                .replace(/{description}/g, magazine.description || "")
+                .replace(/{issue_number}/g, magazine.issue_number || "")
+                .replace(/{price}/g, magazine.price || "");
             });
 
             if (wrapperClasses.length > 0) {
