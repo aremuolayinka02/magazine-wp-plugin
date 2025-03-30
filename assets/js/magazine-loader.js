@@ -136,16 +136,13 @@
               var magazineUrl = "";
               if ($container.data("loggedIn")) {
                 if (viewerPageId) {
-                  magazineUrl = "?page_id=" + viewerPageId;
+                  // Now we only pass the magazine ID, not the PDF URL
+                  magazineUrl =
+                    "?page_id=" + viewerPageId + "&id=" + magazine.id;
                 } else {
                   console.warn("No viewer page ID found! Check your settings.");
-                  magazineUrl = "?";
+                  magazineUrl = "#";
                 }
-                magazineUrl +=
-                  "&pdf=" +
-                  encodeURIComponent(magazine.pdf_file) +
-                  "&id=" +
-                  magazine.id;
               } else {
                 magazineUrl = $container.data("redirect");
               }

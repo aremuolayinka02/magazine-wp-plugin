@@ -21,12 +21,15 @@ function rsa_magazines_init() {
     // Initialize REST API
     $rsa_magazine_rest = RSA_Magazine_REST::get_instance();
     $rsa_magazine_rest->init();
+    
+    // Initialize AJAX handlers
+    $rsa_magazine_ajax = RSA_Magazine_AJAX::get_instance();
+    $rsa_magazine_ajax->init();
 }
 add_action('plugins_loaded', 'rsa_magazines_init');
 
 // Place activation hook and related functions at top level
 register_activation_hook(__FILE__, 'rsa_magazines_activate');
-
 
 // Add this to ensure scripts load in the footer
 function rsa_magazine_viewer_scripts() {
@@ -98,6 +101,7 @@ function rsa_magazines_activate() {
     
     add_option('rsa_magazines_allowed_formats', $default_formats);
     add_option('rsa_magazines_featured_magazine', ''); // Add this line
+    add_option('rsa_magazines_login_redirect', wp_login_url()); // Add login redirect option
 
     // Add default templates
     $default_template = '<div class="restricted-content">
